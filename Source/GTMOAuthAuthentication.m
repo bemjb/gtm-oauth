@@ -568,11 +568,25 @@ static NSString *const kUserEmailIsVerifiedKey    = @"isVerified";
   if ([oldPort length] > 0) {
     portStr = [@":" stringByAppendingString:oldPort];
   }
+    
+  NSArray *oldPathComponents = [oldURL pathComponents];
+  NSMutableArray *newPathComponents = [NSMutableArray arrayWithCapacity:oldPathComponents.count];
+  if (oldPathComponents.count > 0) {
+    // the first component is always '/', replace with '', so that the URL properly goes back together
+    // when we get around to joining it later
+    [newPathComponents insertObject:@"" atIndex:0]; 
+    for (int index = 1; index < oldPathComponents.count; index++) {
+        NSString *oldPathComponent = [oldPathComponents objectAtIndex:index];
+        NSString *newPathComponent = [oldPathComponent stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
+        [newPathComponents insertObject:newPathComponent atIndex:index];
+    }
+  }
+  NSString *newPath = [newPathComponents componentsJoinedByString:@"/"];
 
   NSString *qMark = [query length] > 0 ? @"?" : @"";
   NSString *newURLStr = [NSString stringWithFormat:@"%@://%@%@%@%@%@",
                          [oldURL scheme], [oldURL host], portStr,
-                         [oldURL path], qMark, query];
+                         newPath, qMark, query];
   
   [request setURL:[NSURL URLWithString:newURLStr]];
 }
